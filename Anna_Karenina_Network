@@ -1,0 +1,499 @@
+# Install packages
+
+pip install beautifulsoup4
+from bs4 import BeautifulSoup
+import nltk
+nltk.download('gutenberg')
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+from nltk.corpus import gutenberg 
+import spacy 
+import requests 
+import pandas as pd
+import networkx as nx 
+
+# Import NLP package
+nlp = spacy.load("en_core_web_md") 
+
+#Spacy POS Tagging
+# Get text of Anna Karenina from Gutenberg project
+
+def get_data(): 
+
+    url = 'https://www.gutenberg.org/cache/epub/1399/pg1399.txt' 
+    text = requests.get(url).text 
+
+    # strip header junk 
+    cutoff = text.index('Happy families are all alike') 
+    text = text[cutoff:] 
+
+    # strip footer junk 
+    cutoff = text.rindex('*** END OF THE PROJECT GUTENBERG') 
+    text = text[:cutoff] 
+
+    # pre-processing to clean the text 
+    text = text.replace('\r', ' ').replace('\n', ' ') 
+    text = text.replace('â\x80\x99', '\'').replace('â\x80\x9c', '"').replace('â\x80\x9d', '""').replace('â\x80\x94', ' ') 
+
+    return text 
+
+# Preview text
+text = get_data() 
+
+# Increase max length of NLP
+nlp.max_length = 2004399
+
+text[0:279] 
+
+# Create doc variable, apply sentance function
+
+doc = nlp(text) 
+
+sentences = list(doc.sents) 
+
+# Loop through sentences
+
+for s in sentences[0:6]: 
+
+    print(s) 
+
+    print()
+
+# Tokenize parts of sentence
+
+for token in sentences[0]: 
+
+    print('{}: {}'.format(token.text, token.tag_)) 
+
+# Tokenize parts of sentences using POS
+
+for token in sentences[0]: 
+
+    print('{}: {}'.format(token.text, token.pos_)) 
+
+#Tokenize entities only
+
+entities = [] 
+
+for token in sentences[0]: 
+
+    if token.tag_ == 'NNP': 
+
+        entities.append(token.text) 
+
+entities 
+
+entities = [] 
+
+for sentence in sentences: 
+
+    sentence_entities = [] 
+
+    for token in sentence: 
+
+        if token.tag_ == 'NNP': 
+
+            sentence_entities.append(token.text)       
+
+    entities.append(sentence_entities)     
+
+entities[0:10] 
+
+def extract_entities(text): 
+
+    doc = nlp(text) 
+
+    sentences = list(doc.sents) 
+
+    entities = [] 
+
+    for sentence in sentences: 
+
+        sentence_entities = [] 
+
+        for token in sentence: 
+
+            if token.tag_ == 'NNP': 
+
+                sentence_entities.append(token.text) 
+
+        if len(sentence_entities) > 0: 
+
+            entities.append(sentence_entities) 
+
+    return entities 
+
+extract_entities(text) 
+
+#Spacy NER
+
+for token in sentences[0]: 
+
+    print('{}: {}'.format(token.text, token.ent_type_)) 
+
+doc = nlp(sentences[0].text) 
+
+for ent in doc.ents: 
+
+    print('{}: {}'.format(ent, ent.label_)) 
+
+def extract_entities(text): 
+
+    doc = nlp(text) 
+
+    sentences = list(doc.sents) 
+
+    entities = [] 
+
+    for sentence in sentences: 
+
+        sentence_entities = []  
+
+        sent_doc = nlp(sentence.text)   
+
+        for ent in sent_doc.ents:   
+
+            if ent.label_ in ['PERSON', 'ORG', 'GPE']: 
+
+                entity = ent.text.strip() 
+
+                if "'s" in entity: 
+
+                    cutoff = entity.index("'s") 
+
+                    entity = entity[:cutoff] 
+
+                if entity != '': 
+
+                    sentence_entities.append(entity) 
+
+        sentence_entities = list(set(sentence_entities)) 
+
+        if len(sentence_entities) > 1: 
+
+            entities.append(sentence_entities) 
+
+    return entities 
+
+nodes = sorted(G_anna.nodes)
+nodes
+
+# Data Cleansing, Node Mapping
+
+node_mapping = {
+    'Agafea  Mihalovna' : 'Agafea',
+    'Agafea Mihalovna' : 'Agafea',
+    'Alexey  Alexandrovitch': 'Karenin',
+    'Alexey  Alexandrovitch Karenin': 'Karenin',
+    'Alexey  Alexandrovitch’s': 'Karenin',
+    'Alexey Alexandrovitch': 'Karenin',
+    'Alexey Alexandrovitch’s': 'Karenin',
+    "Karenin'": 'Karenin',
+    'Petersburg Alexey Alexandrovitch': 'Karenin',
+    'Karenins': 'Karenin',
+    'Alexey Kirillovitch': 'Vronsky',
+    'Alexey Kirillovitch Vronsky': 'Vronsky',
+    'Alexey Vronsky': 'Vronsky',
+    'Vronsky': 'Vronsky',
+    'Anna' : 'Anna',
+    'Anna  Arkadyevna': 'Anna',
+    'Anna  Karenina': 'Anna',
+    'Anna Arkadyevna': 'Anna',
+    'Anna Arkadyevna’s': 'Anna',
+    'Anna with Sviazhsky': 'Anna',
+    'Madame Karenina': 'Anna',
+    'Karenina': 'Anna',
+    'Betsy': 'Betsy',
+    'Betsy Tverskaya': 'Betsy',
+    'Princess Tverskaya': 'Betsy',
+    'Countess Lidia': 'Lidia',
+    'Countess Lidia  Ivanovna': 'Lidia',
+    'Countess Lidia Ivanovna': 'Lidia',
+    'Lidi': 'Lidia',
+    'Lidia': 'Lidia',
+    'Lidia  Ivanovna': 'Lidia',
+    'Lidia Ivanovna': 'Lidia',
+    'Ivanovna': 'Lidia',
+    'Liza  Merkalova' : 'Merkalova',
+    'Liza Merkalova': 'Merkalova',
+    'Liza Neptunova': 'Merkalova',
+    'Madame Stahl': 'Madame Stahl',
+    "Madame Stahl’s": 'Madame Stahl',
+    "Madame  Stahl'": 'Madame Stahl',
+    'Stahl': 'Madame Stahl',
+    'Marya  Ivanovna' : 'Marya',
+    'Marya  Nikolaevna': 'Marya',
+    'Marya  Philimonovna': 'Marya',
+    'Marya  Vlasyevna': 'Marya',
+    'Marya Borissovna': 'Marya',
+    'Marya Nikolaevna': 'Marya',
+    'Marya Petrovna': 'Marya',
+    'Marya Philimonovna': 'Marya',
+    'Marya Vlasyevna,”—this': 'Marya',
+    'Marya Yevgenyevna': 'Marya',
+    'Marya Yevgenyevna Rtishtcheva': 'Marya',
+    'Masha': 'Masha',
+    'Masha Tchibisova': 'Masha',
+    'Natalia' : 'Natalia',
+    'Natalia Alexandrovna': 'Natalia',
+    'Prince  Shtcherbatsky': 'Prince Shtcherbatsky',    
+    "Prince Shtcherbatsky’s'" : 'Prince Shtcherbatsky',
+    'Princess Shtcherbatskaya' : 'Princess Shtcherbatskaya' ,
+    "Princess Shtcherbatskaya’s'": 'Princess Shtcherbatskaya',
+    'Princess Shtcherbatskaya’s': 'Princess Shtcherbatskaya',
+    'Sergey  Ivanovitch':'Sergey Ivanovitch',
+    'Sergey Alexyevitch':'Sergey Ivanovitch',
+    'Shtcherbatsky' : 'Shtcherbatsky',
+    'Shtcherbatskys': 'Shtcherbatsky',
+    'Sviazhsky' : 'Sviazhsky',
+    "Sviazhsky’s": 'Sviazhsky',
+    'Dolly': 'Dolly',
+    'Dolly’s': 'Dolly',
+    'Darya': 'Dolly',
+    'Darya  Alexandrovna': 'Dolly',
+    'Darya  Alexandrovna’s': 'Dolly',
+    'Darya Alexandrovna': 'Dolly',
+    'Darya Dmitrievna': 'Dolly',
+    'Kitty': 'Kitty',
+    'Kitty Levin': 'Kitty',
+    'Kitty Shtcherbatskaya': 'Kitty',
+    'Katerina Alexandrovna': 'Kitty',
+    'Konstantin': 'Levin',
+    'Konstantin  Dmitrievitch': 'Levin',
+    'Konstantin Dmitrievitch': 'Levin',
+    'Konstantin Dmitrievitch Levin': 'Levin',
+    'Konstantin Levin': 'Levin',
+    'Kostya': 'Levin',
+    'Kostya Levin': 'Levin',
+    'Levin': 'Levin',
+    'Levin to Veslovsky': 'Levin',
+    'Levin two': 'Levin',
+    'Levin,': 'Levin',
+    'Levins': 'Levin',
+    'Levin—“a': 'Levin',
+    'Levin’s': 'Levin',
+    'Nikolay': 'Nikolay Levin',
+    'Nikolay Dmitrievitch': 'Nikolay Levin',
+    'Nikolay Ivanitch': 'Nikolay Levin',
+    'Nikolay Levin': 'Nikolay Levin',
+    'Oblonsky': 'Stiva',
+    'Oblonskys': 'Stiva',
+    'Prince  Oblonsky': 'Stiva',
+    'Stepan  Arkadyevitch': 'Stiva',
+    'Stepan  Arkadyevitch, Dolly': 'Stiva',
+    'Stepan Arkadyevitch': 'Stiva',
+    'Alexander Dmitrievitch Shtcherbatsky': 'Stiva',
+    'Stiva': 'Stiva',
+    'Stiva Oblonsky': 'Stiva',
+    'Sergey  Ivanovitch' : 'Sergey  Ivanovitch',
+    'Sergey  Ivanovitch Koznishev': 'Sergey  Ivanovitch',
+    'Sergey  Ivanovitch’s': 'Sergey  Ivanovitch',
+    'Sergey Ivanovitch': 'Sergey  Ivanovitch',
+    'Sergey Ivanovitch’s': 'Sergey  Ivanovitch',
+    'Sergey Koznishev': 'Sergey  Ivanovitch',
+    'Vassenka': 'Vassenka',
+    'Vassenka  Veslovsky': 'Vassenka',
+    'Vassenka Veslovsky': 'Vassenka',
+    'Vassily' : 'Vassily',
+    'Vassily  Lukitch': 'Vassily',
+    'Vassily Lukitch': 'Vassily',
+    'Varvara': 'Princess Oblonsky',
+    'Varvara Andreevna': 'Princess Oblonsky',
+    'this Pyotr Dmitrievitch' : 'Pyotr Dmitrievitch', 
+    'the celebrated Koznishev': 'Koznishev' ,
+    'the Countess Vronskaya’s': 'Countess Vronskaya',
+    'the United States' : 'United States',
+    'china' : 'China',
+    'the Princess Myakaya' : 'Princess Myakaya',
+    'Château des Fleurs_' : 'Château des Fleurs'
+}
+
+morph_entities = extract_entities(text) 
+
+morph_entities 
+
+for i, connection in enumerate(morph_entities):
+    updated_connection = [node_mapping.get(name, name) for name in connection]
+    morph_entities[i] = updated_connection
+
+for connection in morph_entities:
+    print(connection)
+
+final_sources = [] 
+final_targets = [] 
+
+for row in morph_entities: 
+
+    source = row[0] 
+    targets = row[1:] 
+
+    for target in targets: 
+
+        final_sources.append(source) 
+        final_targets.append(target) 
+
+sorted(final_sources)
+
+sorted(final_targets)
+
+def get_network_data(entities): 
+
+    final_sources = [] 
+    final_targets = [] 
+
+    for row in entities: 
+
+        source = row[0] 
+        targets = row[1:] 
+
+        for target in targets: 
+
+            final_sources.append(source) 
+            final_targets.append(target) 
+
+    df = pd.DataFrame({'source':final_sources, 'target':final_targets}) 
+
+    return df 
+
+anna_network_df = get_network_data(morph_entities) 
+
+anna_network_df.head(30)
+
+anna_network_df.drop_duplicates() 
+
+##Converting network data into networks
+
+G_anna = nx.from_pandas_edgelist(anna_network_df) 
+
+print (G_anna)
+
+def draw_ego_graph(G, ego, center=True, k=0, show_names=True, edge_width=0.1, node_size=3, font_size=12): 
+
+    ego = nx.ego_graph(G, ego, center=center) 
+
+    ego = nx.k_core(ego, k) 
+
+    return draw_graph(ego, node_size=node_size, font_size=font_size, show_names=show_names, edge_width=edge_width) 
+
+def draw_graph(G, show_names=False, node_size=1, font_size=10, edge_width=0.5):
+
+  import numpy as np
+  from IPython.display import SVG
+  from sknetwork.visualization import svg_graph
+  from sknetwork.data import Bunch
+  from sknetwork.ranking import PageRank
+  from scipy.sparse import csr_matrix
+
+  adjacency = nx.to_scipy_sparse_array(G, nodelist=None, dtype=None, weight='weight', format='csr')
+  adjacency = csr_matrix(adjacency) # fix to weird sknetwork-csr issue; comment out to troubleshoot
+  names = np.array(list(G.nodes))
+  graph = Bunch()
+  graph.adjacency = adjacency
+  graph.names = np.array(names)
+  pagerank = PageRank()
+  scores = pagerank.fit_transform(adjacency)
+
+  if show_names:
+    image = svg_graph(graph.adjacency, font_size=font_size, node_size=node_size, names=graph.names, width=700, height=500, scores=scores, edge_width=edge_width)
+  else:
+    image = svg_graph(graph.adjacency, node_size=node_size, width=700, height=500, scores = scores, edge_width=edge_width)
+  return SVG(image)
+
+## Data Cleansing, dropping irrelevant nodes
+
+nodes_to_remove = ['zu viel Klopot', 'women,—at','unnaturalness', 'unpunctualities','unwarily','venez trop tard_','vieux saxe',
+ 'violet crossway  stripes', 'wee', 'wenn ich bezwungen','the gray ringlets','the merry party','the bee-house','the bill:—“_Soupe printanière',
+ 'curtseyed','dans la force de l’âge','das ewig Weibliche','desk—“it','ejus','equerry','et puis il est comme il faut_','fro','grandmamma',
+ 'grouse','grouse moors','gymnastics','jubilee','la dernière','la pièce de  resistance','le broyer','le fer','l’estragon','ma  chère_’',
+'ma chère_','ma tante','macédoine de','mais vous','mais à ce  point', 'mesmerizer', 'mettre à son aise_','mon ami', 'mon cher',
+ 'morfondre là  dans','n’a','oatfield','overbrimming','peut être jaloux','poudre de riz','qui','qui est arrivée','raillery',
+ 'red catkins','sammt','satin cloaks','sept merveilles du monde_','skeleton','soirée','soirée_','taciturnity','the','the Board of Irrigation',
+ 'the Commission of the 17th of August''Zahar','Zipporah','Zola','Zu compliziert','affectedly','auch Klopots','belle-sœur',
+ 'belle-sœur_','blague_','bush','carte blanche','Apostle Paul','Atlas','Aïe','Babylon','Beethoven', 'Champagne', 'Commission of the', 'Cook', 'Don', 'Eastern', 'Gray old', 'Hatt’ ich auch recht hübsch'
+  'Il mio', 'Je crois que Veslovsky fait un petit',  'Lady Somebody',  'Mais','Mais il ne  faut pas' ,  'Poésie des Enfers' , 'Tant mieux', 'Tout ça est' , 'wenn ich bezwungen',
+    'countess', 'Alexey', 'Scotch', 'this M. Levin', 'Thy Holy Covenant', 'Countess', 'Vous comprenez l’anglais', 'Imperial', 'Tit', 'Council', 'Mlle', 'Château des Fleurs_', 'Vronsky, Sviazhsky, Koznishev' ]
+G_anna.remove_nodes_from(nodes_to_remove)
+
+draw_graph(G_anna) 
+
+draw_graph(G_anna, edge_width=0.2, node_size=3, show_names=True) 
+
+draw_graph(G_anna, edge_width=0.2, node_size=2, show_names=True, font_size=12) 
+
+#Correcting for self loop
+
+G_anna.remove_edges_from(nx.selfloop_edges(G_anna))
+
+draw_ego_graph(G_anna, 'Anna') 
+
+draw_ego_graph(G_anna, 'Anna', center=False) 
+
+draw_ego_graph(G_anna, 'Anna', center=False, k=1) 
+
+draw_ego_graph(G_anna, 'Vronsky') 
+
+draw_ego_graph(G_anna, 'Kitty') 
+
+draw_ego_graph(G_anna, 'Levin')
+
+draw_ego_graph(G_anna, 'Lidia')
+
+draw_ego_graph(G_anna, 'Betsy')
+
+draw_ego_graph(G_anna, 'Karenin')
+
+draw_ego_graph(G_anna, 'Varenka')
+
+draw_ego_graph(G_anna, 'Madame Stahl')
+
+draw_ego_graph(G_anna, 'Dolly')
+
+draw_ego_graph(G_anna, 'Agafea')
+
+deg_cent = nx.degree_centrality(G_anna)
+
+#Checking degree centrality
+
+deg_cent_df = pd.DataFrame().from_dict(deg_cent, orient='index')
+deg_cent_df.columns = ['degree_centrality']
+deg_cent_df.sort_values('degree_centrality', ascending=False, inplace=True)
+deg_cent_df.head(10)
+
+#Graphing degree centrality
+
+title = 'Characters with the Most Connections'
+
+deg_cent_df.head(10).plot.barh(figsize=(10,6),color='#D4A227', title=title).invert_yaxis()
+
+#Checking betweeness centrality
+
+betw_cent = nx.betweenness_centrality(G_anna)
+
+betw_cent_df = pd.DataFrame().from_dict(betw_cent, orient='index')
+betw_cent_df.columns = ['betweenness_centrality']
+betw_cent_df.sort_values('betweenness_centrality', ascending=False, inplace=True)
+betw_cent_df.head(10)
+
+#Graphing Betweeness Centrality
+
+title = 'Characters Who Are Key in the Flow of Information'
+
+betw_cent_df.head(10).plot.barh(figsize=(10,6), title=title).invert_yaxis()
+
+#Checking closeness centrality
+
+close_cent = nx.closeness_centrality(G_anna)
+
+close_cent_df = pd.DataFrame().from_dict(close_cent, orient='index')
+close_cent_df.columns = ['closeness_centrality']
+close_cent_df.sort_values('closeness_centrality', ascending=False, inplace=True)
+close_cent_df.head(10)
+
+#Graphing Closeness Centrality
+
+title = 'Important Characters by Closeness Centrality'
+
+close_cent_df.head(10).plot.barh(figsize=(10,6), title=title).invert_yaxis()
+
+
+
